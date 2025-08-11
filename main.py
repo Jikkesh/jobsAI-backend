@@ -59,7 +59,7 @@ app = gr.mount_gradio_app(app, gradio_blocks, path="/add-job/Admin")
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
-        host="localhost",
+        host="0.0.0.0",
         port=int(os.getenv("PORT", 4000)),
         reload=True,
     )
