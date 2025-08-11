@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Job CMS Dashboard - Home</title>
+    <style>
+        /* Base Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f9f9f9;
+        }
+
+        header {
+            background: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+        }
+
+        header nav ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            gap: 15px;
+        }
+
+        header nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .ck-editor__editable_inline {
+            min-height: 400px;
+            /* Adjust this value as needed */
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            background: #007BFF;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        table th {
+            background: #007BFF;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .edit-btn {
+            background: #28a745;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            width: 70%;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Pagination Controls */
+        #paginationControls {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        #paginationControls button {
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: none;
+            background: #007BFF;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+    <!-- jQuery and CKEditor (for edit modal if needed) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.ckeditor.com/ckeditor5/35.0.1/classic/ckeditor.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/cms/Admin">Home</a></li>
+                <li><a href="/add-job/Admin" target="_blank" >Add New Job</a></li>
+            </ul>
+        </nav>
+        <h1>Job CMS Dashboard</h1>
+    </header>
+    <div class="container">
+        <!-- Search Section -->
+        <section id="searchSection">
+            <form id="searchForm">
+                <label for="search_category">Category:</label>
+                <select id="search_category">
+                    <option value="Fresher">Fresher</option>
+                    <option value="Internship">Internship</option>
+                    <option value="Remote">Remote</option>
+                    <option value="Experienced">Experienced</option>
+                </select>
+                <button type="submit" class="btn">Search</button>
+            </form>
+        </section>
+
+        <!-- Jobs Table Section -->
+        <section id="jobsListSection">
+            <h2>All Jobs</h2>
+            <table id="jobsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Job Role</th>
+                        <th>Company</th>
+                        <th>Category</th>
+                        <th>Experience</th>
+                        <th>Location</th>
+                        <th>Link</th>
+                        <th>Posted Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Job rows will be rendered here via JavaScript -->
+                </tbody>
+            </table>
+            <!-- Pagination Controls -->
+            <div id="paginationControls">
+                <button id="prevPage">Previous</button>
+                <span id="pageInfo">Page 1</span>
+                <button id="nextPage">Next</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Edit Job Modal (Reuse your existing edit form fields & CKEditor integration) -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeEditModal">&times;</span>
+            <h2>Edit Job</h2>
+            <form id="editJobForm">
+                <input type="hidden" id="edit_job_id" />
+                <!-- Repeat similar form fields as in the Add form -->
+                <div class="form-group">
+                    <label for="edit_category">Category</label>
+                    <select id="edit_category" required>
+                        <option value="">Select Category</option>
+                        <option value="Fresher">Fresher</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Remote">Remote</option>
+                        <option value="Experienced">Experienced</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit_company_name">Company Name</label>
+                    <input type="text" id="edit_company_name" required />
+                </div>
+                <div class="form-group">
+                    <label for="edit_job_role">Job Role</label>
+                    <input type="text" id="edit_job_role" required />
+                </div>
+                <div class="form-group">
+                    <label for="edit_website_link">Website Link</label>
+                    <input type="text" id="edit_website_link" />
+                </div>
+                <div class="form-group">
+                    <label for="edit_state">State</label>
+                    <input type="text" id="edit_state" required />
+                </div>
+                <div class="form-group">
+                    <label for="edit_city">City</label>
+                    <input type="text" id="edit_city" required />
+                </div>
+                <div class="form-group">
+                    <label for="edit_experience">Experience</label>
+                    <select id="edit_experience" required>
+                        <option value="">Select Experience</option>
+                        <option value="Fresher">Fresher</option>
+                        <option value="1-3 years">1 - 3 years</option>
+                        <option value="3-5 years">3 - 5 years</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit_qualification">Qualification</label>
+                    <select id="edit_qualification" required>
+                        <option value="">Select Qualification</option>
+                        <option value="Any Degree">Any Degree</option>
+                        <option value="B.E/CSE">B.E/CSE</option>
+                        <option value="B.Tech">B.Tech</option>
+                        <option value="B.Sc">B.Sc</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit_batch">Batch (Optional)</label>
+                    <input type="text" id="edit_batch" />
+                </div>
+                <div class="form-group">
+                    <label for="edit_salary_package">Salary Package (Optional)</label>
+                    <input type="text" id="edit_salary_package" />
+                </div>
+                <!-- CKEditor Text Areas for Edit Modal -->
+                <div class="form-group">
+                    <label for="edit_job_description">Job Description</label>
+                    <textarea id="edit_job_description" rows="10"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit_key_responsibility">Key Responsibility</label>
+                    <textarea id="edit_key_responsibility" rows="10"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit_about_company">About Company</label>
+                    <textarea id="edit_about_company" rows="10"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit_selection_process">Selection Process</label>
+                    <textarea id="edit_selection_process" rows="10"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Current Image</label>
+                    <img id="edit_image_preview" src="" alt="Job Image" style="max-width: 100px; display: none;" />
+                </div>
+                <div class="form-group">
+                    <label for="edit_image">Upload New Image (Optional)</label>
+                    <input type="file" id="edit_image" />
+                </div>
+                <button type="submit" class="btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for pagination and CKEditor instances for edit modal
+        let currentPage = 1;
+        const pageSize = 10;
+        let editorEditJobDescription, editorEditKeyResponsibilty, editorEditAboutCompany, editorEditSelectionProcess;
+
+        // Fetch jobs using the category search and pagination API
+        function fetchJobs() {
+            const category = $("#search_category").val();
+            let url = category
+                ? `/jobs/category/${category}?currentPage=${currentPage}&pageSize=${pageSize}`
+                : `/jobs?currentPage=${currentPage}&pageSize=${pageSize}`;
+
+            $.ajax({
+                url: url,
+                method: "GET",
+                dataType: "json",
+                success: function (response) {
+                    // If the paginated API returns { jobs: [...], totalCount: N }:
+                    const jobs = response.jobs || response;
+                    renderJobs(jobs);
+                    $("#pageInfo").text(`Page ${currentPage}`);
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error fetching jobs:", error);
+                }
+            });
+        }
+
+        // Render jobs into the table body
+        function renderJobs(jobs) {
+            const tbody = $("#jobsTable tbody");
+            tbody.empty();
+            jobs.forEach(job => {
+                tbody.append(`
+          <tr>
+            <td>${job.id}</td>
+            <td>${job.job_role}</td>
+            <td>${job.company_name}</td>
+            <td>${job.category}</td>
+            <td>${job.experience}</td>
+            <td>${job.city}, ${job.state}</td>
+            <td><a href="${job.website_link}" target="_blank">Link</a></td>
+            <td>${new Date(job.posted_on).toLocaleDateString()}</td>
+            <td>
+              <button class="action-btn edit-btn" onclick="openEditModal(${job.id})">Edit</button>
+              <button class="action-btn delete-btn" onclick="deleteJob(${job.id})">Delete</button>
+            </td>
+          </tr>
+        `);
+            });
+        }
+
+        $(document).ready(function () {
+            fetchJobs();
+
+            $("#searchForm").on("submit", function (e) {
+                e.preventDefault();
+                currentPage = 1;
+                fetchJobs();
+            });
+
+            $("#prevPage").on("click", function () {
+                if (currentPage > 1) {
+                    currentPage--;
+                    fetchJobs();
+                }
+            });
+
+            $("#nextPage").on("click", function () {
+                currentPage++;
+                fetchJobs();
+            });
+
+            $("#closeEditModal").on("click", function () {
+                $("#editModal").hide();
+            });
+        });
+
+        // Open Edit Modal and populate its fields
+        async function openEditModal(id) {
+            const response = await fetch(`/jobs/${id}`);
+            if (response.ok) {
+                const job = await response.json();
+                if (job) {
+                    $("#edit_job_id").val(job.id);
+                    $("#edit_category").val(job.category);
+                    $("#edit_company_name").val(job.company_name);
+                    $("#edit_job_role").val(job.job_role);
+                    $("#edit_website_link").val(job.website_link);
+                    $("#edit_state").val(job.state);
+                    $("#edit_city").val(job.city);
+                    $("#edit_experience").val(job.experience);
+                    $("#edit_qualification").val(job.qualification);
+                    $("#edit_batch").val(job.batch);
+                    $("#edit_salary_package").val(job.salary_package);
+
+                    // Show current image if available
+                    if (job.image_url) {
+                        $("#edit_image_preview").attr("src", job.image_url).show();
+                    } else {
+                        $("#edit_image_preview").hide();
+                    }
+
+                    // Initialize or update CKEditor for edit modal fields
+                    if (!editorEditJobDescription) {
+                        ClassicEditor.create(document.querySelector('#edit_job_description'))
+                            .then(editor => {
+                                editorEditJobDescription = editor;
+                                editorEditJobDescription.setData(job.job_description);
+                            })
+                            .catch(error => console.error(error));
+                    } else {
+                        editorEditJobDescription.setData(job.job_description);
+                    }
+                    if (!editorEditKeyResponsibility) {
+                        ClassicEditor.create(document.querySelector('#edit_key_responsibility'))
+                            .then(editor => {
+                                editorEditKeyResponsibility = editor;
+                                editorEditKeyResponsibility.setData(job.key_responsibility);
+                            })
+                            .catch(error => console.error(error));
+                    } else {
+                        editorEditKeyResponsibility.setData(job.key_responsibility);
+                    }
+                    if (!editorEditAboutCompany) {
+                        ClassicEditor.create(document.querySelector('#edit_about_company'))
+                            .then(editor => {
+                                editorEditAboutCompany = editor;
+                                editorEditAboutCompany.setData(job.about_company);
+                            })
+                            .catch(error => console.error(error));
+                    } else {
+                        editorEditAboutCompany.setData(job.about_company);
+                    }
+                    if (!editorEditSelectionProcess) {
+                        ClassicEditor.create(document.querySelector('#edit_selection_process'))
+                            .then(editor => {
+                                editorEditSelectionProcess = editor;
+                                editorEditSelectionProcess.setData(job.selection_process);
+                            })
+                            .catch(error => console.error(error));
+                    } else {
+                        editorEditSelectionProcess.setData(job.selection_process);
+                    }
+                    $("#editModal").show();
+                }
+            }
+        }
+
+        // Handle deletion of a job
+        async function deleteJob(id) {
+            if (confirm("Are you sure you want to delete this job?")) {
+                const response = await fetch(`/jobs/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    fetchJobs();
+                } else {
+                    console.error("Error deleting job");
+                }
+            }
+        }
+
+        // Handle Edit Job submission (similar to Add, but with FormData and PUT request)
+        $("#editJobForm").on("submit", async function (e) {
+            e.preventDefault();
+            const id = $("#edit_job_id").val();
+            const formData = new FormData();
+            formData.append("category", $("#edit_category").val());
+            formData.append("company_name", $("#edit_company_name").val());
+            formData.append("job_role", $("#edit_job_role").val());
+            formData.append("website_link", $("#edit_website_link").val());
+            formData.append("state", $("#edit_state").val());
+            formData.append("city", $("#edit_city").val());
+            formData.append("experience", $("#edit_experience").val());
+            formData.append("qualification", $("#edit_qualification").val());
+            formData.append("batch", $("#edit_batch").val());
+            formData.append("salary_package", $("#edit_salary_package").val());
+            formData.append("job_description", editorEditJobDescription ? editorEditJobDescription.getData() : "");
+            formData.append("key_responsibility", editorEditKeyResponsibility ? editorEditKeyResponsibility.getData() : "");
+            formData.append("about_company", editorEditAboutCompany ? editorEditAboutCompany.getData() : "");
+            formData.append("selection_process", editorEditSelectionProcess ? editorEditSelectionProcess.getData() : "");
+
+            const imageInput = $("#edit_image")[0];
+            if (imageInput.files.length > 0) {
+                formData.append("image", imageInput.files[0]);
+            }
+
+            const response = await fetch(`/jobs/${id}`, {
+                method: 'PUT',
+                body: formData
+            });
+            if (response.ok) {
+                $("#editModal").hide();
+                fetchJobs();
+            } else {
+                console.error("Error updating job");
+            }
+        });
+    </script>
+</body>
+
+</html>

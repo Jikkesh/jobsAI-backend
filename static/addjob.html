@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Job CMS Dashboard - Add New Job</title>
+  <style>
+    /* Same base styles as before */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+    }
+    header {
+      background: #007BFF;
+      color: #fff;
+      padding: 10px 20px;
+    }
+    header nav ul {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      gap: 15px;
+    }
+    header nav ul li a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 { margin-top: 0; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .btn {
+      background: #007BFF;
+      color: #fff;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn:hover { background: #0056b3; }
+    .ck-editor__editable_inline { min-height: 400px; }
+  </style>
+  <!-- jQuery and CKEditor -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.ckeditor.com/ckeditor5/35.0.1/classic/ckeditor.js"></script>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        <li><a href="/cms">Home</a></li>
+        <li><a href="/add-job">Add New Job</a></li>
+      </ul>
+    </nav>
+    <h1>Job CMS Dashboard - Add New Job</h1>
+  </header>
+  <div class="container">
+    <section id="addJobSection">
+      <h2>Add New Job</h2>
+      <form id="addJobForm">
+        <div class="form-group">
+          <label for="category">Category</label>
+          <select id="category" required>
+            <option value="">Select Category</option>
+            <option value="Fresher">Fresher</option>
+            <option value="Internship">Internship</option>
+            <option value="Remote">Remote</option>
+            <option value="Experienced">Experienced</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="company_name">Company Name</label>
+          <input type="text" id="company_name" required />
+        </div>
+        <div class="form-group">
+          <label for="job_role">Job Role</label>
+          <input type="text" id="job_role" required />
+        </div>
+        <div class="form-group">
+          <label for="website_link">Website Link</label>
+          <input type="text" id="website_link" />
+        </div>
+        <div class="form-group">
+          <label for="state">State</label>
+          <input type="text" id="state" required />
+        </div>
+        <div class="form-group">
+          <label for="city">City</label>
+          <input type="text" id="city" required />
+        </div>
+        <div class="form-group">
+          <label for="experience">Experience</label>
+          <select id="experience" required>
+            <option value="">Select Experience</option>
+            <option value="Fresher">Fresher</option>
+            <option value="1-3 years">1 - 3 years</option>
+            <option value="3-5 years">3 - 5 years</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="qualification">Qualification</label>
+          <select id="qualification" required>
+            <option value="">Select Qualification</option>
+            <option value="Any Degree">Any Degree</option>
+            <option value="B.E/CSE">B.E/CSE</option>
+            <option value="B.Tech">B.Tech</option>
+            <option value="B.Sc">B.Sc</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="batch">Batch (Optional)</label>
+          <input type="text" id="batch" />
+        </div>
+        <div class="form-group">
+          <label for="salary_package">Salary Package (Optional)</label>
+          <input type="text" id="salary_package" />
+        </div>
+        <!-- CKEditor Text Areas -->
+        <div class="form-group">
+          <label for="job_description">Job Description</label>
+          <textarea id="job_description" rows="10"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="key_responsibility">Key Responsibility</label>
+          <textarea id="key_responsibility" rows="10"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="about_company">About Company</label>
+          <textarea id="about_company" rows="10"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="selection_process">Selection Process</label>
+          <textarea id="selection_process" rows="10"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="image">Company Image (Optional)</label>
+          <input type="file" id="image" />
+        </div>
+        <button type="submit" class="btn">Add Job</button>
+      </form>
+    </section>
+  </div>
+  <script>
+    let editorJobDescription, editorKeyResponsibilty, editorAboutCompany, editorSelectionProcess;
+    
+    $(document).ready(function() {
+      // Initialize CKEditor for each textarea in the Add Job form
+      ClassicEditor.create(document.querySelector('#job_description'))
+        .then(editor => { editorJobDescription = editor; })
+        .catch(error => { console.error(error); });
+      ClassicEditor.create(document.querySelector('#key_responsibility'))
+        .then(editor => { editorKeyResponsibilty = editor; })
+        .catch(error => { console.error(error); });
+      ClassicEditor.create(document.querySelector('#about_company'))
+        .then(editor => { editorAboutCompany = editor; })
+        .catch(error => { console.error(error); });
+      ClassicEditor.create(document.querySelector('#selection_process'))
+        .then(editor => { editorSelectionProcess = editor; })
+        .catch(error => { console.error(error); });
+    
+      // Handle Add Job submission with FormData (including optional image)
+      $("#addJobForm").on("submit", async function(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("category", $("#category").val());
+        formData.append("company_name", $("#company_name").val());
+        formData.append("job_role", $("#job_role").val());
+        formData.append("website_link", $("#website_link").val());
+        formData.append("state", $("#state").val());
+        formData.append("city", $("#city").val());
+        formData.append("experience", $("#experience").val());
+        formData.append("qualification", $("#qualification").val());
+        formData.append("batch", $("#batch").val());
+        formData.append("salary_package", $("#salary_package").val());
+        formData.append("job_description", editorJobDescription ? editorJobDescription.getData() : "");
+        formData.append("key_responsibility", editorKeyResponsibilty ? editorKeyResponsibilty.getData() : "");
+        formData.append("about_company", editorAboutCompany ? editorAboutCompany.getData() : "");
+        formData.append("selection_process", editorSelectionProcess ? editorSelectionProcess.getData() : "");
+    
+        const imageInput = $("#image")[0];
+        if (imageInput.files.length > 0) {
+          formData.append("image", imageInput.files[0]);
+        }
+    
+        const response = await fetch('/jobs/', {
+          method: 'POST',
+          body: formData
+        });
+    
+        if (response.ok) {
+          alert("Job added successfully!");
+          $("#addJobForm")[0].reset();
+          if (editorJobDescription) editorJobDescription.setData("");
+          if (editorKeyResponsibilty) editorKeyResponsibilty.setData("");
+          if (editorAboutCompany) editorAboutCompany.setData("");
+          if (editorSelectionProcess) editorSelectionProcess.setData("");
+        } else {
+          alert("Error adding job.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

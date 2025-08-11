@@ -1,0 +1,46 @@
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Ignore virtual environment
+venv/
+.env/
+.venv/
+
+# Ignore environment variables
+.env
+.env.local
+.env.*.local
+secrets.toml
+
+# Ignore IDE/editor-specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore logs and temporary files
+logs/
+*.log
+*.out
+*.pid
+tmp/
+*.sqlite3
+
+# Ignore database migrations (if using Alembic)
+migrations/
+
+# Ignore dependencies
+*.egg-info/
+dist/
+build/
+
+# Ignore Gradio cache
+gradio_cache/
+.gradio/
+
+# Ignore CSV files
+# *.csv
