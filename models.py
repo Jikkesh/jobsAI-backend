@@ -20,10 +20,10 @@ class Job(Base):
     job_description = Column(Text, nullable=False)
     key_responsibility = Column(Text, nullable=True)
     about_company = Column(Text, nullable=True)
-    #job_type = Column(String, nullable=False)
     selection_process = Column(Text, nullable=True)
     image = Column(String, nullable=True)
     posted_on = Column(DateTime, nullable=False)
+    job_slug = Column(String, unique=True, index=True, nullable=False)
 
 class User(Base):
     __tablename__ = "users"
