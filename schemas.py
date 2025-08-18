@@ -48,7 +48,8 @@ class JobResponse(BaseModel):
     selection_process: str
     image_url: Optional[str] = None
     posted_on: datetime
-    
+    job_slug: str
+
     class Config:
         from_attributes = True
 

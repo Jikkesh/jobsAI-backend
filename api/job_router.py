@@ -1,6 +1,7 @@
 from mimetypes import guess_type
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from db import get_db
 from models import Job
 from schemas import CategoryResponse, JobCreate, JobOut, JobResponse, JobUpdate
@@ -30,6 +31,46 @@ def job_to_response(job: Job, request: Request) -> JobResponse:
 # -------------------------------------------------------------------
 # Endpoints
 # -------------------------------------------------------------------
+
+@router.get("/trending", response_model=List[JobResponse])
+def get_trending_jobs(
+    request: Request,
+    n: int = Query(5, ge=1, le=50, description="Number of random remote jobs to return (1-50)"),
+    db: Session = Depends(get_db)
+):
+
+    try:
+        # Get N random remote jobs
+        jobs = (
+            db.query(Job)
+            .filter(Job.category == "Remote")
+            .order_by(func.random())  # Use func.random() for PostgreSQL/SQLite
+            .limit(n)
+            .all()
+        )
+        
+        if not jobs:
+            # If no remote jobs found, return empty list
+            return []
+        
+        return [job_to_response(job, request) for job in jobs]
+    
+    except OperationalError as e:
+        logger.warning(f"Database connection dropped, retrying query: {e}")
+        db.rollback()  # rollback broken transaction
+        try:
+            # Retry logic
+            jobs = (
+                db.query(Job)
+                .filter(Job.category == "Remote")
+                .order_by(func.random())
+                .limit(n)
+                .all()
+            )
+            return [job_to_response(job, request) for job in jobs]
+        except Exception as e2:
+            logger.error(f"Retry failed: {e2}")
+            raise HTTPException(status_code=500, detail="Database connection error")
 
 @router.get("/latest", response_model=Dict[str, List[JobResponse]])
 def get_latest_jobs(request: Request, db: Session = Depends(get_db)):
@@ -116,17 +157,17 @@ def _fetch_jobs_by_category(request, category, page, page_size, db):
     }
 
 #Get a Job by ID
-@router.get("/{job_id}", response_model=JobResponse)
-def get_job(job_id: int,request: Request, db: Session = Depends(get_db)):
+@router.get("/{job_slug}", response_model=JobResponse)
+def get_job(job_slug: str, request: Request, db: Session = Depends(get_db)):
     """
-    Retrieve a specific job by its ID.
-    
+    Retrieve a specific job by its slug.
+
     Raises a 404 error if the job does not exist.
     """
-    job = db.query(Job).filter(Job.id == job_id).first()
+    job = db.query(Job).filter(Job.job_slug == job_slug).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    return job_to_response(job,request)
+    return job_to_response(job, request)
 
 @router.get("/", response_model=List[JobResponse])
 def get_jobs(request: Request, db: Session = Depends(get_db)):

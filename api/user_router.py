@@ -93,15 +93,20 @@ async def send_contact_email(form_data: ContactForm):
 </html>
 """
 
+    to_email = "jobsai2001@gmail.com"
+    cc_email = "josephdrusela@gmail.com"
 
     msg = MIMEMultipart()
     msg["From"] = SMTP_USER
-    msg["To"] = "jobsai2001@gmail.com"
+    msg["To"] = to_email
+    msg["Cc"] = cc_email
     msg["Subject"] = "New Contact Form Submission"
     
     msg["X-Priority"] = "1"
     msg["Priority"] = "urgent"
     msg["Importance"] = "high"
+    
+    all_recipients = [to_email] + [cc_email]
 
     # Attach the HTML body to the email
     msg.attach(MIMEText(html_body, "html"))
@@ -110,7 +115,7 @@ async def send_contact_email(form_data: ContactForm):
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_USER, ["josephdrusela@gmail.com"], msg.as_string())
+            server.sendmail(SMTP_USER, all_recipients, msg.as_string())
         return {"message": "Email sent successfully"}
     
     except Exception as e:
