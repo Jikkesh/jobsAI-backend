@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from db import engine, Base
@@ -9,6 +9,7 @@ import uvicorn
 from gradio_interface import create_interface
 import gradio as gr
 
+from image_processor import DynamicStaticFiles  # Updated import
 from upload_image import get_company_image
 
 # Initialize FastAPI app
@@ -38,9 +39,12 @@ async def root():
 #CMS System Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Setup dynamic image serving
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploaded_images")
-app.mount("/images", StaticFiles(directory=UPLOAD_DIR), name="images")
+
+# Use our custom DynamicStaticFiles as ASGI app
+app.mount("/images", DynamicStaticFiles(directory=str(UPLOAD_DIR)), name="images")
 
 @app.post("/upload-image/")
 async def upload_image(company_name: str):
