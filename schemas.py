@@ -13,8 +13,7 @@ class JobBase(BaseModel):
     website_link: Optional[str] = None
     state: str
     city: str
-    # 'experience' is now a string field with predefined choices.
-    experience: Optional[str]  # Allowed values: "Fresher", "1-3 years", "3-5 years"
+    experience: Optional[str]
     qualification: str
     batch: Optional[str] = None
     salary_package: Optional[str] = None

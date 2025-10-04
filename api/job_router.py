@@ -2,6 +2,7 @@ from mimetypes import guess_type
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from bulk_import import BulkJobsRequest, BulkJobsResponse, import_jobs_bulk
 from db import get_db
 from models import Job
 from schemas import CategoryResponse, JobCreate, JobOut, JobResponse, JobUpdate
@@ -31,6 +32,128 @@ def job_to_response(job: Job, request: Request) -> JobResponse:
 # -------------------------------------------------------------------
 # Endpoints
 # -------------------------------------------------------------------
+
+@router.post("/", response_model=JobResponse, status_code=201)
+def create_job(
+    request: Request,
+    category: str = Form(...),
+    company_name: str = Form(...),
+    job_role: str = Form(...),
+    website_link: str = Form(None),
+    state: str = Form(...),
+    city: str = Form(...),
+    experience: str = Form(...),
+    qualification: str = Form(...),
+    batch: str = Form(None),
+    salary_package: str = Form(None),
+    job_description: str = Form(...),
+    key_responsibility: str = Form(None),
+    about_company: str = Form(None),
+    selection_process: str = Form(None),
+    image: str = Form(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new job entry with basic validation.
+    """
+    # Validate required fields are not empty
+    if not category or not category.strip():
+        raise HTTPException(status_code=400, detail="Category is required")
+    if not company_name or not company_name.strip():
+        raise HTTPException(status_code=400, detail="Company name is required")
+    if not job_role or not job_role.strip():
+        raise HTTPException(status_code=400, detail="Job role is required")
+    if not state or not state.strip():
+        raise HTTPException(status_code=400, detail="State is required")
+    if not city or not city.strip():
+        raise HTTPException(status_code=400, detail="City is required")
+    if website_link and not website_link.strip():
+        raise HTTPException(status_code=400, detail="Website link cannot be empty if provided")
+
+    if not qualification or not qualification.strip():
+        raise HTTPException(status_code=400, detail="Qualification is required")
+    if not job_description or not job_description.strip():
+        raise HTTPException(status_code=400, detail="Job description is required")
+    if not key_responsibility or not key_responsibility.strip():
+        raise HTTPException(status_code=400, detail="Key responsibility is required")
+    if not about_company or not about_company.strip():
+        raise HTTPException(status_code=400, detail="About company is required")
+    if not selection_process or not selection_process.strip():
+        raise HTTPException(status_code=400, detail="Selection process is required")
+
+    
+    try:
+        # Create new job instance
+        new_job = Job(
+            category=category,
+            company_name=company_name,
+            job_role=job_role,
+            website_link=website_link,
+            state=state,
+            city=city,
+            experience=experience,
+            qualification=qualification,
+            batch=batch,
+            salary_package=salary_package,
+            job_description=job_description,
+            key_responsibility=key_responsibility,
+            about_company=about_company,
+            selection_process=selection_process,
+            image=image
+        )
+        
+        db.add(new_job)
+        db.commit()
+        db.refresh(new_job)
+        
+        return job_to_response(new_job, request)
+    
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to create job: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create job")
+    
+# API Endpoint
+@router.post("/api/jobs/bulk-import", response_model=BulkJobsResponse)
+async def create_jobs_bulk(
+    request: BulkJobsRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Bulk import jobs into the database.
+    
+    - Validates all job data
+    - Parses datetime fields
+    - Checks for duplicates
+    - Imports only new jobs
+    
+    Returns statistics about the import process.
+    """
+    try:
+        if not request.jobs:
+            raise HTTPException(status_code=400, detail="No jobs provided")
+        
+        # Perform the import
+        stats = import_jobs_bulk(request.jobs, db)
+        
+        # Prepare response message
+        message = (
+            f"Import completed: {stats['imported']} new jobs imported, "
+            f"{stats['duplicates']} duplicates skipped, "
+            f"{stats['failed']} failed"
+        )
+        
+        return BulkJobsResponse(
+            success=True,
+            total_jobs=stats['total'],
+            imported=stats['imported'],
+            duplicates=stats['duplicates'],
+            failed=stats['failed'],
+            message=message
+        )
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/trending", response_model=List[JobResponse])
 def get_trending_jobs(
@@ -143,9 +266,14 @@ def get_jobs_by_category(
 
 
 def _fetch_jobs_by_category(request, category, page, page_size, db):
+    temp = None
+    if category.lower() == "ai":
+        temp = "AI"
+    else:
+        temp = category.title()
     query = (
         db.query(Job)
-        .filter(Job.category == category.title())
+        .filter(Job.category == temp)
         .order_by(Job.posted_on.desc())
     )
     total_count = query.count()
