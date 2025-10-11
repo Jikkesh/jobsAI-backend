@@ -1,8 +1,10 @@
+import io
 from mimetypes import guess_type
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile
+import pandas as pd
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from bulk_import import BulkJobsRequest, BulkJobsResponse, import_jobs_bulk
+from bulk_import import BulkJobsRequest, BulkJobsResponse, JobInput, import_jobs_bulk
 from db import get_db
 from models import Job
 from schemas import CategoryResponse, JobCreate, JobOut, JobResponse, JobUpdate
@@ -114,27 +116,73 @@ def create_job(
         raise HTTPException(status_code=500, detail="Failed to create job")
     
 # API Endpoint
-@router.post("/api/jobs/bulk-import", response_model=BulkJobsResponse)
-async def create_jobs_bulk(
-    request: BulkJobsRequest,
+@router.post("/api/jobs/bulk-import-csv", response_model=BulkJobsResponse)
+async def create_jobs_bulk_csv(
+    file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
     """
-    Bulk import jobs into the database.
+    Bulk import jobs from CSV file.
     
-    - Validates all job data
-    - Parses datetime fields
-    - Checks for duplicates
-    - Imports only new jobs
+    Expected CSV columns:
+    - category, company_name, job_role, website_link, state, city,
+      experience, qualification, batch, salary_package, job_description,
+      key_responsibility, about_company, selection_process, image, posted_on
     
     Returns statistics about the import process.
     """
     try:
-        if not request.jobs:
-            raise HTTPException(status_code=400, detail="No jobs provided")
+        # Validate file type
+        if not file.filename.endswith('.csv'):
+            raise HTTPException(status_code=400, detail="Only CSV files are allowed")
+        
+        # Read CSV file
+        contents = await file.read()
+        df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
+        
+        # Validate required columns
+        required_columns = ['category', 'company_name', 'job_role', 'website_link']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Missing required columns: {', '.join(missing_columns)}"
+            )
+        
+        # Convert DataFrame to list of JobInput objects
+        jobs = []
+        for _, row in df.iterrows():
+            job_data = {
+                'category': str(row.get('category', '')),
+                'company_name': str(row.get('company_name', '')),
+                'job_role': str(row.get('job_role', '')),
+                'website_link': str(row.get('website_link', '')),
+                'state': str(row.get('state', 'Not specified')),
+                'city': str(row.get('city', 'Not specified')),
+                'experience': str(row.get('experience', 'Not specified')),
+                'qualification': str(row.get('qualification', 'Not specified')),
+                'batch': str(row.get('batch', 'Not specified')),
+                'salary_package': str(row.get('salary_package', 'Not specified')),
+                'job_description': str(row.get('job_description', 'Not specified')),
+                'key_responsibility': str(row.get('key_responsibility', 'Not specified')),
+                'about_company': str(row.get('about_company', 'Not specified')),
+                'selection_process': str(row.get('selection_process', 'Not specified')),
+                'image': str(row.get('image', 'Not specified')),
+                'posted_on': str(row.get('posted_on', None)) if pd.notna(row.get('posted_on')) else None
+            }
+            
+            # Handle NaN values
+            for key, value in job_data.items():
+                if value == 'nan' or pd.isna(value):
+                    job_data[key] = 'Not specified' if key != 'posted_on' else None
+            
+            jobs.append(JobInput(**job_data))
+        
+        if not jobs:
+            raise HTTPException(status_code=400, detail="No valid jobs found in CSV")
         
         # Perform the import
-        stats = import_jobs_bulk(request.jobs, db)
+        stats = import_jobs_bulk(jobs, db)
         
         # Prepare response message
         message = (
@@ -152,8 +200,13 @@ async def create_jobs_bulk(
             message=message
         )
     
+    except pd.errors.EmptyDataError:
+        raise HTTPException(status_code=400, detail="CSV file is empty")
+    except pd.errors.ParserError as e:
+        raise HTTPException(status_code=400, detail=f"CSV parsing error: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error in bulk CSV import: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Import failed: {str(e)}")
 
 @router.get("/trending", response_model=List[JobResponse])
 def get_trending_jobs(
