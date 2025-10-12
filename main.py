@@ -58,7 +58,7 @@ async def read_index():
 
 # Blog image upload configuration
 BLOG_UPLOAD_DIR = PathLib("uploaded_images")  # Use PathLib
-BASE_URL = "http://192.168.29.43:4000"
+BASE_URL = "https://api.jobsai.in"
 BLOG_UPLOAD_DIR.mkdir(exist_ok=True)
 
 def generate_unique_filename(original_filename: str) -> str:
